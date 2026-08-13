@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="build-version" content="performance-v2-20260813">
+<meta name="build-version" content="performance-v3-no-grain-20260813">
 <title>Decoding Urban Vitality · 机荷高速品牌传播作品集</title>
 <link rel="preload" href="assets/slides/slide-image-01-d500a10d6e.webp" as="image" type="image/webp" fetchpriority="high">
 <style>
@@ -1284,13 +1284,6 @@
     border:1px solid rgba(127,127,127,.16);
   }
 
-  #grain{
-    position:fixed;inset:0;width:100%;height:100%;z-index:25;
-    pointer-events:none;opacity:.12;mix-blend-mode:multiply;
-    image-rendering:pixelated;
-  }
-  body.dark-bg #grain{mix-blend-mode:screen;opacity:.08}
-
   #experience-ui{position:fixed;inset:0;z-index:42;pointer-events:none}
   #progress-rail{
     position:absolute;left:0;top:0;width:100%;height:3px;
@@ -1358,7 +1351,6 @@
   @media (prefers-reduced-motion:reduce){
     #transition-blade{display:none}
   }
-  body.low-power #grain,
   body.low-power #transition-blade{display:none!important}
 
   /* ============ DATA THEATRE · trustworthy animated statistics ============ */
@@ -1561,7 +1553,6 @@
 <canvas id="bg-grid" class="bg"></canvas>
 <div id="hint">← → 翻页 · B 平衡动效 · ESC 索引</div>
 <button id="effects-toggle" type="button" aria-pressed="false">开启完整动效</button>
-<canvas id="grain" aria-hidden="true"></canvas>
 <div id="experience-ui" aria-hidden="true">
   <div id="progress-rail"><span id="progress-fill"></span></div>
   <div id="live-folio"><span class="pulse"></span><span id="live-page">01 / 12</span></div>
@@ -2928,10 +2919,8 @@ if(motion){
 /* ============== EXPERIENCE DIRECTOR · stage chrome + responsive data field ============== */
 (function(){
   window.__effectsDebug = window.__effectsDebug || {};
-  window.__effectsDebug.grainRunning = false;
   window.__effectsDebug.signalRunning = false;
   const blade=document.getElementById('transition-blade');
-  const grain=document.getElementById('grain');
   const signal=document.querySelector('canvas.signal-field');
   let activeIndex=window.__currentSlideIndex || 0;
   let documentVisible=document.visibilityState==='visible';
@@ -2944,30 +2933,6 @@ if(motion){
     blade.classList.add(e.detail.direction>0?'forward':'backward');
     setTimeout(()=>blade.classList.remove('forward','backward'),850);
   });
-
-  /* Fine monochrome film grain, deliberately low-frequency */
-  let grainTimer=0;
-  function paintGrain(){
-    if(!grain || window.__lowPowerMode) return;
-    const w=160,h=90,dpr=Math.min(devicePixelRatio||1,2);
-    if(grain.width!==w*dpr||grain.height!==h*dpr){grain.width=w*dpr;grain.height=h*dpr}
-    const ctx=grain.getContext('2d');
-    const image=ctx.createImageData(grain.width,grain.height);
-    for(let i=0;i<image.data.length;i+=4){
-      const v=Math.random()>.52?255:0;
-      image.data[i]=image.data[i+1]=image.data[i+2]=v;
-      image.data[i+3]=Math.floor(Math.random()*34);
-    }
-    ctx.putImageData(image,0,0);
-  }
-  function startGrain(){
-    if(grainTimer||window.__lowPowerMode||!documentVisible)return;
-    paintGrain();grainTimer=setInterval(paintGrain,120);window.__effectsDebug.grainRunning=true;
-  }
-  function stopGrain(){
-    clearInterval(grainTimer);grainTimer=0;window.__effectsDebug.grainRunning=false;
-    grain?.getContext('2d')?.clearRect(0,0,grain.width,grain.height);
-  }
 
   /* Cover-only infrastructure signal field: lane traces + moving telemetry */
   let signalRAF=0,signalCtx=null,signalW=0,signalH=0,signalDpr=1;
@@ -3046,18 +3011,18 @@ if(motion){
     if(activeIndex===0)startSignal();else stopSignal();
   });
   addEventListener('swiss-low-power-change',e=>{
-    if(e.detail.on){stopGrain();stopSignal()}
-    else{startGrain();startSignal()}
+    if(e.detail.on) stopSignal();
+    else startSignal();
   });
   document.addEventListener('visibilitychange',()=>{
     documentVisible=document.visibilityState==='visible';
-    if(documentVisible){startGrain();startSignal()}else{stopGrain();stopSignal()}
+    if(documentVisible) startSignal();
+    else stopSignal();
   });
-  startGrain();
   startSignal();
 
   addEventListener('beforeunload',()=>{
-    stopGrain();stopSignal();
+    stopSignal();
   });
 })();
 </script>
